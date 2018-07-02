@@ -1,10 +1,74 @@
-<html>
-<head>
-  <meta charset="utf-8" />
-  <script src="https://code.createjs.com/1.0.0/createjs.min.js"></script>
-</head>
-<body>
-  //テスト
-  <canvas id="main_canvas"></canvas>
-</body>
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>未定</title>
+    <!--CreateJSの読み込み-->
+    <script src="https://code.createjs.com/1.0.0/createjs.min.js"></script>
+
+  </head>
+  <body onload="init();">
+    <!--ゲーム画面の作成-->
+    <canvas id="Game_Play" width="1280" height="720" style="background-color:skyblue;"></canvas>
+    <!--CreateJSの中身-->
+    <script>
+    //プレイヤー1
+    var mPlayer1;
+    //キーが押された時のイベント
+    document.addEventListener("keydown",keyDown_Func);
+    //キーが離れた時のイベント
+    document.addEventListener("keyup",keyUp_Func);
+    //一定間隔で指定した関数を呼ぶ
+    setInterval( loop, 1000 / 60);
+
+    var R_Flag = false;//Dキーが押されているか
+    var L_Flag = false;//Aキーが押されているか
+    var U_Flag = false;//Wキーが押されているか
+    var D_Flag = false;//Sキーが押されているか
+
+    //キーを押したとき
+    function keyDown_Func(e){
+      if(e.keyCode == 68) R_Flag = true;//右
+      if(e.keyCode == 65) L_Flag = true;//左
+      if(e.keyCode == 87) U_Flag = true;//上
+      if(e.keyCode == 83) D_Flag = true;//下
+    }
+    //キーを話したとき
+    function keyUp_Func(e){
+      if(e.keyCode == 68) R_Flag = false;//右
+      if(e.keyCode == 65) L_Flag = false;//左
+      if(e.keyCode == 87) U_Flag = false;//上
+      if(e.keyCode == 83) D_Flag = false;//下
+    }
+    //WASDで移動
+    function loop(){
+      if(R_Flag) mPlayer1.x += 5;
+      if(L_Flag) mPlayer1.x -= 5;
+      if(U_Flag) mPlayer1.y -= 5;
+      if(D_Flag) mPlayer1.y += 5;
+    }
+
+    function init(){
+        //ステージの生成
+        var mStage = new createjs.Stage("Game_Play");
+        //プレイヤー1の生成
+        mPlayer1 = new createjs.Bitmap("Res/Player1.png");
+        //プレイヤーを(100,100)の位置に置く
+        mPlayer1.x = 100;
+        mPlayer1.y = 100;
+        //プレイヤーの中心位置の設定
+        mPlayer1.regX = 32;
+        mPlayer1.regY = 32;
+        //ステージにプレイヤー1を追加
+        mStage.addChild(mPlayer1);
+        //フレームレートの設定
+        createjs.Ticker.setFPS(30);
+        //ステージの更新
+        createjs.Ticker.addEventListener("tick", function(){
+          mStage.update();
+      });
+    }
+    </script>
+
+  </body>
 </html>
