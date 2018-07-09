@@ -2,38 +2,52 @@
 <html lang="en" dir="ltr">
   <head>
     <meta charset="utf-8">
-    <title>未定</title>
+    <title>反転陣地</title>
     <!--CreateJSの読み込み-->
     <script src="https://code.createjs.com/1.0.0/createjs.min.js"></script>
 
   </head>
-  <body onload="init();">
+  <body onload="Init();">
     <!--ゲーム画面の作成-->
     <canvas id="Game_Play" width="1280" height="720" style="background-color:skyblue;"></canvas>
     <!--CreateJSの中身-->
     <script>
+    //フレームレート
+    var mGame_Frame = 30;
+    //画面サイズ用変数
+    var mCanvas_Width = 1280;
+    var mCanvas_Height = 720;
+    //ステージの生成
+    var mStage;
     //プレイヤー1
     var mPlayer1;
-    //キーが押された時のイベント
-    document.addEventListener("keydown",keyDown_Func);
-    //キーが離れた時のイベント
-    document.addEventListener("keyup",keyUp_Func);
-    //一定間隔で指定した関数を呼ぶ
-    setInterval( loop, 1000 / 60);
+    //弾配列
+    var mBullet_List = [];
 
     var R_Flag = false;//Dキーが押されているか
     var L_Flag = false;//Aキーが押されているか
     var U_Flag = false;//Wキーが押されているか
     var D_Flag = false;//Sキーが押されているか
 
-    //キーを押したとき
+    //フレームレートの設定
+    createjs.Ticker.setFPS(mGame_Frame);
+    //キーが押された時のイベント
+    document.addEventListener("keydown",keyDown_Func);
+    //キーが離れた時のイベント
+    document.addEventListener("keyup",keyUp_Func);
+    //一定間隔で指定した関数を呼ぶ
+    setInterval( loop, mGame_Frame);
+
+    //WASDキーを押したとき
     function keyDown_Func(e){
       if(e.keyCode == 68) R_Flag = true;//右
       if(e.keyCode == 65) L_Flag = true;//左
       if(e.keyCode == 87) U_Flag = true;//上
       if(e.keyCode == 83) D_Flag = true;//下
+      //スペースキーでプレイヤー1の攻撃
+      if(e.keyCode == 32) Player1_Attack();
     }
-    //キーを話したとき
+    //キーを離したとき
     function keyUp_Func(e){
       if(e.keyCode == 68) R_Flag = false;//右
       if(e.keyCode == 65) L_Flag = false;//左
@@ -42,32 +56,76 @@
     }
     //WASDで移動
     function loop(){
-      if(R_Flag) mPlayer1.x += 5;
-      if(L_Flag) mPlayer1.x -= 5;
-      if(U_Flag) mPlayer1.y -= 5;
-      if(D_Flag) mPlayer1.y += 5;
+      if(R_Flag){
+        mPlayer1.x += 5;
+        mPlayer1.rotation = 90;
+      }
+      if(L_Flag){
+        mPlayer1.x -= 5;
+        mPlayer1.rotation = -90;
+      }
+      if(U_Flag){
+        mPlayer1.y -= 5;
+        mPlayer1.rotation = 0;
+      }
+      if(D_Flag){
+        mPlayer1.y += 5;
+        mPlayer1.rotation = 180;
+      }
+    }
+    //プレイヤー1の攻撃
+    function Player1_Attack(){
+      //弾の生成
+      var bullet = new createjs.Bitmap("Res/Player1_Bullet.png");
+      //画像の中心位置の設定
+      bullet.regX = 32;
+      bullet.regY = 32;
+      //弾の向きをプレイヤーの向きに設定する
+      bullet.rotation = mPlayer1.rotation;
+      //弾の生成位置はプレイヤーの位置に設定
+      bullet.x = mPlayer1.x;
+      bullet.y = mPlayer1.y;
+      //ステージに弾を追加
+      mStage.addChild(bullet);
+      mBullet_List.push(bullet);
+    }
+    //CreateJSのTickerを利用した更新
+    function handleTick(){
+      //弾発射の移動処理
+      for(var i = 0; i < mBullet_List.length; i++){
+        //弾を右方向へ移動させる
+        mBullet_List[i].x += 15;
+        //画面端まで移動したら
+        if(mBullet_List[i].x > mCanvas_Width){
+          //ステージ上から削除する
+          mStage.removeChild(mBullet_List[i]);
+          //配列から削除する
+          mBullet_List.splice(i, 1);
+        }
+      }
+    }
+    //ゲームの処理
+    function Init(){
+      //ステージの生成
+      mStage = new createjs.Stage("Game_Play");
+      //プレイヤー1の生成
+      mPlayer1 = new createjs.Bitmap("Res/Player1.png");
+      //プレイヤーを(100,100)の位置に置く
+      mPlayer1.x = 100;
+      mPlayer1.y = 100;
+      //プレイヤーの中心位置の設定
+      mPlayer1.regX = 32;
+      mPlayer1.regY = 32;
+      //ステージにプレイヤー1を追加
+      mStage.addChild(mPlayer1);
+      //ステージの更新
+      createjs.Ticker.addEventListener("tick", function(){
+        handleTick();
+        mStage.update();
+      });
+
     }
 
-    function init(){
-        //ステージの生成
-        var mStage = new createjs.Stage("Game_Play");
-        //プレイヤー1の生成
-        mPlayer1 = new createjs.Bitmap("Res/Player1.png");
-        //プレイヤーを(100,100)の位置に置く
-        mPlayer1.x = 100;
-        mPlayer1.y = 100;
-        //プレイヤーの中心位置の設定
-        mPlayer1.regX = 32;
-        mPlayer1.regY = 32;
-        //ステージにプレイヤー1を追加
-        mStage.addChild(mPlayer1);
-        //フレームレートの設定
-        createjs.Ticker.setFPS(30);
-        //ステージの更新
-        createjs.Ticker.addEventListener("tick", function(){
-          mStage.update();
-      });
-    }
     </script>
 
   </body>
