@@ -1,0 +1,29 @@
+{
+  "name": "wight",
+  "version": "1.0.0",
+  "description": "Sample",
+  "main": "server.js",
+  "dependencies": {
+    "express": "^4.16.3",
+    "socket.io": "^2.1.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SatoShin000/WightTeam.git"
+  },
+  "keywords": [
+    "Node.js",
+    "socket.io"
+  ],
+  "author": "k_g",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/SatoShin000/WightTeam/issues"
+  },
+  "homepage": "https://github.com/SatoShin000/WightTeam#readme"
+}

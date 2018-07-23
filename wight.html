@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="utf-8">
+    <title>反転陣地</title>
+    <!--CreateJSの読み込み-->
+    <script src="https://code.createjs.com/1.0.0/createjs.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+
+</head>
+<body onload="Init();">
+    <!--ゲーム画面の作成-->
+    <canvas id="Game_Play" width="1280" height="720" style="background-color:skyblue;"></canvas>
+    <!--CreateJSの中身-->
+    <script>
+        //フレームレート
+        var mGame_Frame = 60;
+        //画面サイズ用変数
+        var mCanvas_Width = 1280;
+        var mCanvas_Height = 720;
+        //ステージの生成
+        var mStage;
+        // ステージの配列データ
+        var mStageArray = [];
+        // あたったステージの位置
+        var hitPosX;
+        var hitPosY;
+        var oldPosX;
+        var oldPosY;
+        // プレイヤー1
+        var mPlayer1;
+        // プレイヤー2
+        var mPlayer2;
+        //弾配列
+        var mBullet_List = [];
+
+        var R_Flag = false;//Dキーが押されているか
+        var L_Flag = false;//Aキーが押されているか
+        var U_Flag = false;//Wキーが押されているか
+        var D_Flag = false;//Sキーが押されているか
+
+        let gamestart = false;
+
+        let playerNumber;
+        let room;
+
+        let socket = io();
+
+        //フレームレートの設定
+        createjs.Ticker.setFPS(mGame_Frame);
+        //キーが押された時のイベント
+        document.addEventListener("keydown", keyDown_Func);
+        //キーが離れた時のイベント
+        document.addEventListener("keyup", keyUp_Func);
+        //一定間隔で指定した関数を呼ぶ
+        setInterval(loop, mGame_Frame);
+
+        //WASDキーを押したとき
+        function keyDown_Func(e) {
+            if (e.keyCode == 68) R_Flag = true;//右
+            if (e.keyCode == 65) L_Flag = true;//左
+            if (e.keyCode == 87) U_Flag = true;//上
+            if (e.keyCode == 83) D_Flag = true;//下
+            //スペースキーでプレイヤー1の攻撃
+            if (e.keyCode == 32 || e.keyCode == 13) {
+                Player1_Attack();
+            }
+        }
+        //キーを離したとき
+        function keyUp_Func(e) {
+            if (e.keyCode == 68) R_Flag = false;//右
+            if (e.keyCode == 65) L_Flag = false;//左
+            if (e.keyCode == 87) U_Flag = false;//上
+            if (e.keyCode == 83) D_Flag = false;//下
+        }
+        // サーバへデータ送信
+        // emit を使うとイベント名を指定できる
+        room = 1;
+        socket.emit('join',{date1:room});
+
+        //socket.emit('gamedate',{date1:mPlayer1});
+
+        //socket.on('senddate',function(req){
+        //  mPlayer2.x = req.x;
+        //  mPlayer2.y = req.y;
+        //});
+
+        socket.on('playerNums',function(req){
+          playerNumber = req;
+        });
+
+        //WASDで移動
+        function loop() {
+          if(playerNumber == 1){
+            // 要修正
+            var isHit = false;
+            for (var i = 0; i < mStageArray.length; i++) {
+                var stageTip = mStageArray[i];
+                if (checkHit(mPlayer1.x+32, mPlayer1.y+32, stageTip.x, stageTip.y, stageTip.regX, stageTip.regY)) {
+                    isHit = true;
+                    hitPosX = stageTip.x;
+                    hitPosY = stageTip.y;
+                    break;
+                }
+            }
+            if (isHit) {
+              oldPosX = mPlayer1.x;
+              oldPosY = mPlayer1.y;
+                if (R_Flag) {
+                    mPlayer1.rotation = 90;
+                    mPlayer1.x += 5;
+                }
+                if (L_Flag) {
+                    mPlayer1.x -= 5;
+                    mPlayer1.rotation = -90;
+                }
+                if (U_Flag) {
+                    mPlayer1.y -= 5;
+                    mPlayer1.rotation = 0;
+                }
+                if (D_Flag) {
+                    mPlayer1.y += 5;
+                    mPlayer1.rotation = 180;
+                }
+            }
+            else {
+              if(mPlayer1.x != oldPosX)
+                mPlayer1.x = hitPosX;
+              if(mPlayer1.y != oldPosY)
+                mPlayer1.y = hitPosY;
+            }
+
+            // ステージ外に出ないように
+            if (mPlayer1.x - mPlayer1.regX < 0) mPlayer1.x = mPlayer1.regX;
+            if (mPlayer1.x + mPlayer1.regX > 1280) mPlayer1.x = 1280 - mPlayer1.regX;
+            if (mPlayer1.y - mPlayer1.regY < 0) mPlayer1.y = mPlayer1.regY;
+            if (mPlayer1.y + mPlayer1.regY > 720) mPlayer1.y = 720 - mPlayer1.regY;
+          }
+          if(playerNumber == 2){
+            // 要修正
+            var isHit = false;
+            for (var i = 0; i < mStageArray.length; i++) {
+                var stageTip = mStageArray[i];
+                if (checkHit(mPlayer2.x+32, mPlayer2.y+32, stageTip.x, stageTip.y, stageTip.regX, stageTip.regY)) {
+                    isHit = true;
+                    hitPosX = stageTip.x;
+                    hitPosY = stageTip.y;
+                    break;
+                }
+            }
+            if (isHit) {
+              oldPosX = mPlayer2.x;
+              oldPosY = mPlayer2.y;
+                if (R_Flag) {
+                    mPlayer2.rotation = 90;
+                    mPlayer2.x += 5;
+                }
+                if (L_Flag) {
+                    mPlayer2.x -= 5;
+                    mPlayer2.rotation = -90;
+                }
+                if (U_Flag) {
+                    mPlayer2.y -= 5;
+                    mPlayer2.rotation = 0;
+                }
+                if (D_Flag) {
+                    mPlayer2.y += 5;
+                    mPlayer2.rotation = 180;
+                }
+            }
+            else {
+              if(mPlayer2.x != oldPosX)
+                mPlayer2.x = hitPosX;
+              if(mPlayer2.y != oldPosY)
+                mPlayer2.y = hitPosY;
+            }
+
+            // ステージ外に出ないように
+            if (mPlayer2.x - mPlayer2.regX < 0) mPlayer2.x = mPlayer2.regX;
+            if (mPlayer2.x + mPlayer2.regX > 1280) mPlayer2.x = 1280 - mPlayer2.regX;
+            if (mPlayer2.y - mPlayer2.regY < 0) mPlayer2.y = mPlayer2.regY;
+            if (mPlayer2.y + mPlayer2.regY > 720) mPlayer2.y = 720 - mPlayer2.regY;
+
+          }
+        }
+        //プレイヤー1の攻撃
+        function Player1_Attack() {
+            //弾の生成
+            var bullet = new createjs.Bitmap("Res/Player1_Bullet.png");
+            //弾の画像情報を取得
+            var bounds = bullet.getBounds();
+            //画像の中心位置の設定
+            //boundsで画像の幅・高さを取得する
+            bullet.regX = bounds.width / 2;
+            bullet.regY = bounds.height / 2;
+            //弾の向きをプレイヤーの向きに設定する
+            if(playerNumber == 1){
+            bullet.rotation = mPlayer1.rotation;
+            //弾の生成位置はプレイヤーの位置に設定
+            bullet.x = mPlayer1.x;
+            bullet.y = mPlayer1.y;
+          }else{
+            bullet.rotation = mPlayer2.rotation;
+            //弾の生成位置はプレイヤーの位置に設定
+            bullet.x = mPlayer2.x;
+            bullet.y = mPlayer2.y;
+          }
+            //ステージに弾を追加
+            mStage.addChild(bullet);
+            mBullet_List.push(bullet);
+        }
+        //CreateJSのTickerを利用した更新
+        function handleTick() {
+            //弾発射の移動処理
+            for (var i = 0; i < mBullet_List.length; i++) {
+                //弾が右向きなら
+                if (mBullet_List[i].rotation == 90) {
+                    //弾を右方向へ移動させる
+                    mBullet_List[i].x += 15;
+                    //画面端まで移動したら
+                    if (mBullet_List[i].x > mCanvas_Width) {
+                        //ステージ上から削除する
+                        mStage.removeChild(mBullet_List[i]);
+                        //配列から削除する
+                        mBullet_List.splice(i, 1);
+                    }
+                }
+                //弾が左向きなら
+                if (mBullet_List[i].rotation == -90) {
+                    //弾を右方向へ移動させる
+                    mBullet_List[i].x -= 15;
+                    //画面端まで移動したら
+                    if (mBullet_List[i].x < 0) {
+                        //ステージ上から削除する
+                        mStage.removeChild(mBullet_List[i]);
+                        //配列から削除する
+                        mBullet_List.splice(i, 1);
+                    }
+                }
+                //弾が上向きなら
+                if (mBullet_List[i].rotation == 0) {
+                    //弾を右方向へ移動させる
+                    mBullet_List[i].y -= 15;
+                    //画面端まで移動したら
+                    if (mBullet_List[i].y < 0) {
+                        //ステージ上から削除する
+                        mStage.removeChild(mBullet_List[i]);
+                        //配列から削除する
+                        mBullet_List.splice(i, 1);
+                    }
+                }
+                //弾が下向きなら
+                if (mBullet_List[i].rotation == 180) {
+                    //弾を右方向へ移動させる
+                    mBullet_List[i].y += 15;
+                    //画面端まで移動したら
+                    if (mBullet_List[i].y > mCanvas_Height) {
+                        //ステージ上から削除する
+                        mStage.removeChild(mBullet_List[i]);
+                        //配列から削除する
+                        mBullet_List.splice(i, 1);
+                    }
+                }
+            }
+
+        }
+
+        //ゲームの処理
+        function Init() {
+
+            //ステージの生成
+            mStage = new createjs.Stage("Game_Play");
+            //プレイヤー1の生成
+            mPlayer1 = new createjs.Bitmap("Res/Player1.png");
+            mPlayer2 = new createjs.Bitmap("Res/Player2.png");
+            createStage();
+            // プレイヤーの中心位置の設定
+            mPlayer1.regX = 32;
+            mPlayer1.regY = 32;
+            mPlayer2.regX = 32;
+            mPlayer2.regY = 32;
+            // プレイヤーを(100,100)の位置に置く
+            mPlayer1.x = 0 + mPlayer1.regX;
+            mPlayer1.y = 0 + mPlayer1.regY;
+            mPlayer2.x = 258 + mPlayer2.regX;
+            mPlayer2.y = 258 + mPlayer2.regY;
+            // プレイヤー1の生成
+            mStage.addChild(mPlayer1);
+            mStage.addChild(mPlayer2);
+            // フレームレートの設定(30fps)
+            createjs.Ticker.setFPS(mGame_Frame);
+            // ステージの更新
+            createjs.Ticker.addEventListener("tick", function () {
+                handleTick();
+                mStage.update();
+            });
+
+            // ステージ生成
+            function createStage() {
+                // とりあえず5x5のステージを作成
+                for (var i = 0; i < 5; ++i) {
+                    for (var k = 0; k < 5; ++k) {
+                        var mStageMapTip = new createjs.Bitmap("Res/White_Panel.png");
+                        mStageMapTip.regX = 32;
+                        mStageMapTip.regY = 32;
+                        mStageMapTip.x = k * 64 + mStageMapTip.regX;
+                        mStageMapTip.y = i * 64 + mStageMapTip.regY;
+                        mStageArray.push(mStageMapTip);
+                        mStage.addChild(mStageMapTip);
+
+                    }
+                }
+            }
+
+            //キャラクターコンストラクタ(名前・画像のパス・初期位置のX座標、Y座標)
+            var Character = function(name, image_src, PosX, PosY){
+              this.name = name;
+              this.image_src = image_src;
+              this.PosX = PosX;
+              this.PosY = PosY;
+            }
+            //prototypeを使ったキャラクターのメソッド作成
+            Character.prototype = {
+              //キャラクターの初期化処理
+              Initialize: function(){
+                //引数で受け取ったパスから画像の読み込み
+                var character = new createjs.Bitmap(this.image_src);
+                //画像の情報を取得
+                var bounds = character.getBounds();
+                //画像の中心位置の設定
+                character.regX = bounds.width / 2;
+                character.regY = bounds.height / 2;
+                //キャラクターの初期位置の設定
+                character.x = this.PosX;
+                character.y = this.PosY;
+                //ステージにキャラクターを追加
+                mStage.addChild(character);
+              }
+
+            }
+
+        }
+
+        function checkHit(obj1X, obj1Y, obj2X, obj2Y, width, height) {
+            if (obj2X - width <= obj1X && obj1X <= obj2X + width &&
+                obj2Y - height <= obj1Y && obj1Y <= obj2Y + height) {
+                return true;
+            }
+            else return false;
+        }
+
+    </script>
+</body>
+</html>
