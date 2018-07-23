@@ -73,21 +73,23 @@
             if (e.keyCode == 87) U_Flag = false;//上
             if (e.keyCode == 83) D_Flag = false;//下
         }
-        // サーバへデータ送信
-        // emit を使うとイベント名を指定できる
-        room = 1;
-        socket.emit('join',{date1:room});
 
-        //socket.emit('gamedate',{date1:mPlayer1});
-
-        //socket.on('senddate',function(req){
-        //  mPlayer2.x = req.x;
-        //  mPlayer2.y = req.y;
-        //});
-
-        socket.on('playerNums',function(req){
-          playerNumber = req;
+        if(playerNumber == 2){
+        socket.on('sendplayer1date',function(req){
+          mPlayer1.x = req.x;
+          mPlayer1.y = req.y;
         });
+      }
+      if(playerNumber == 1){
+        socket.on('sendplayer2date',function(req){
+          mPlayer2.x = req.x;
+          mPlayer2.y = req.y;
+        });
+      }
+
+
+        socket.emit('player1date',{date1:mPlayer1});
+        socket.emit('player2date',{date1:mPlayer2});
 
         //WASDで移動
         function loop() {
@@ -182,6 +184,7 @@
             if (mPlayer2.y + mPlayer2.regY > 720) mPlayer2.y = 720 - mPlayer2.regY;
 
           }
+
         }
         //プレイヤー1の攻撃
         function Player1_Attack() {
@@ -267,6 +270,13 @@
 
         //ゲームの処理
         function Init() {
+          // サーバへデータ送信
+          // emit を使うとイベント名を指定できる
+          room = 1;
+          socket.emit('join',{date1:room});
+          socket.on('playerNums',function(req){
+            playerNumber = req;
+          });
 
             //ステージの生成
             mStage = new createjs.Stage("Game_Play");
@@ -282,8 +292,16 @@
             // プレイヤーを(100,100)の位置に置く
             mPlayer1.x = 0 + mPlayer1.regX;
             mPlayer1.y = 0 + mPlayer1.regY;
-            mPlayer2.x = 258 + mPlayer2.regX;
-            mPlayer2.y = 258 + mPlayer2.regY;
+            mPlayer2.x = 250 + mPlayer2.regX;
+            mPlayer2.y = 250 + mPlayer2.regY;
+            if(playerNumber == 1){
+            oldPosX = mPlayer1.x;
+            oldPosY = mPlayer1.y;
+          }
+          if(playerNumber == 2){
+            oldPosX = mPlayer2.x;
+            oldPosY = mPlayer2.y;
+          }
             // プレイヤー1の生成
             mStage.addChild(mPlayer1);
             mStage.addChild(mPlayer2);

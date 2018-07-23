@@ -42,10 +42,14 @@ console.log('a user connected');
 		console.log('join'+playernum);
   });
 
-	//socket.on('gamedate',function(req){
-    //socket.emit('senddate', req);
-		//console.log('senddate');
-  //});
+	socket.on('player1date',function(req){
+   socket.emit('sendplayer1date', req);
+	 console.log('senddate');
+ });
+ socket.on('player2date',function(req2){
+	 socket.emit('sendplayer2date', req2);
+	 console.log('senddate2');
+	});
 });
 
 //--------------------------------------
